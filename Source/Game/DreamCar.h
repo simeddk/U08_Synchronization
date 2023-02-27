@@ -4,6 +4,43 @@
 #include "GameFramework/Pawn.h"
 #include "DreamCar.generated.h"
 
+//AutonoMouse -> Authority
+USTRUCT()
+struct FMoveState 
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY()
+		float Throttle;
+
+	UPROPERTY()
+		float Steering;
+
+	UPROPERTY()
+		float DeltaTime;
+
+	UPROPERTY()
+		float Time;
+};
+
+//Authority -> Simulate
+USTRUCT()
+struct FServerState
+{
+	GENERATED_USTRUCT_BODY()
+
+public:
+	UPROPERTY()
+		FTransform Transform;
+
+	UPROPERTY()
+		FVector Velocity;
+
+	UPROPERTY()
+		FMoveState LastMove;
+};
+
 UCLASS()
 class GAME_API ADreamCar : public APawn
 {
@@ -23,17 +60,19 @@ private:
 	FVector GetAirResistance();
 	FVector GetRollingResistance();
 	void UpdateLocation(float DeltaTime);
-	void UpdateRotation(float DeltaTime);
+	void UpdateRotation(float DeltaTime, float InSteering);
 
 private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	UFUNCTION(Reliable, Server, WithValidation)
-		void Server_MoveForward(float Value);
+	UFUNCTION(Server, Reliable, WithValidation)
+		void Server_SendMove(FMoveState Move);
 
-	UFUNCTION(Reliable, Server, WithValidation)
-		void Server_MoveRight(float Value);
+	void SimulateMove(const FMoveState& Move);
+
+	FMoveState CreateMove(float DeltaTime);
+	void ClearAcknowledgeMoves(FMoveState LastMove);
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -52,14 +91,17 @@ private:
 		float RollingCoefficient = 0.015f;
 
 private:
+	UPROPERTY(ReplicatedUsing = "OnRep_ServerState")
+		FServerState ServerState;
+
+private:
 	FVector Velocity;
 
-	UPROPERTY(Replicated)
-		FVector ReplicatedLocation;
-
-	UPROPERTY(Replicated)
-		FRotator ReplicatedRotation;
+	UFUNCTION()
+		void OnRep_ServerState();
 
 	float Throttle;
 	float Steering;
+
+	TArray<FMoveState> UnacknowledgeMoves;
 };
