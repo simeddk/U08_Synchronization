@@ -22,6 +22,22 @@ public:
 		FMoveState LastMove;
 };
 
+struct FCubicSpline
+{
+	FVector StartLocation, TargetLocation;
+	FVector StartDerivative, TargetDerivative;
+
+	FVector InterpolateLocation(float LerpRatio) const
+	{
+		return FMath::CubicInterp(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	}
+
+	FVector InterpolateDerivative(float LerpRatio) const
+	{
+		return FMath::CubicInterpDerivative(StartLocation, StartDerivative, TargetLocation, TargetDerivative, LerpRatio);
+	}
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class GAME_API UCReplicateComponent : public UActorComponent
 {
@@ -53,12 +69,26 @@ private:
 	void SimulatedProxy_OnRep_ServerState();
 
 	void SimulateProxyTick(float DeltaTime);
+	FCubicSpline CreateSpline();
+	void InterpolateLocation(const FCubicSpline& Spline, float LerpRatio);
+	void InterpolateVelocity(const FCubicSpline& Spline, float LerpRatio);
+	void InterpolateRotation(float LerpRatio);
+	float VelocityToDerivative();
 
 	TArray<FMoveState> UnacknowledgeMoves;
 
 	float ClientTimeSinceUpdate;
 	float ClientTimeBetweenLastUpdate;
-	FVector ClientStartLocation;
+	FTransform ClientStartTransform;
+	FVector ClientStartVelocity;
+
+	float ClientSimulateTime;
 
 	UCMovementComponent* MovementComponent;
+
+	UPROPERTY()
+		USceneComponent* MeshOffset;
+
+	UFUNCTION(BlueprintCallable, meta = (CallableWithoutWorldContext))
+		void SetMeshOffset(USceneComponent* InMeshOffset) {	MeshOffset = InMeshOffset; }
 };

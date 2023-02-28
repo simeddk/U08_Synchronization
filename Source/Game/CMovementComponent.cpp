@@ -41,8 +41,8 @@ void UCMovementComponent::SimulateMove(const FMoveState& Move)
 FMoveState UCMovementComponent::CreateMove(float DeltaTime)
 {
 	FMoveState move;
-	move.DeltaTime = DeltaTime;
-	move.Throttle = Throttle;
+	move.DeltaTime = DeltaTime * TimeCheatValue;
+	move.Throttle = Throttle * MoveCheatValue;
 	move.Steering = Steering;
 	move.Time = GetWorld()->GetGameState()->GetServerWorldTimeSeconds();
 

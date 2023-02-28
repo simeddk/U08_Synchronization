@@ -25,9 +25,10 @@ private:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	UPROPERTY(VisibleDefaultsOnly)
+public:
+	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
 		UCMovementComponent* MovementComponent;
 
-	UPROPERTY(VisibleDefaultsOnly)
+	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly)
 		UCReplicateComponent* ReplicateComponent;
 };
